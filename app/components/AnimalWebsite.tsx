@@ -16,6 +16,10 @@ interface Animal {
   conservation: string;
 }
 
+// Animation function types
+type AnimationFunction = () => void;
+type HeartClickAnimation = (index: number | string) => void;
+
 const AnimalWebsite = () => {
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,80 +32,165 @@ const AnimalWebsite = () => {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const sparklesRef = useRef<HTMLDivElement>(null);
 
-  // Handle client-side mounting
+  // Animation functions
+  const animations = {
+    cardsFilter: () => {
+      if (!isMounted) return;
+
+      anime({
+        targets: '.animal-card',
+        scale: [0.9, 1],
+        opacity: [0.5, 1],
+        translateY: [20, 0],
+        duration: 600,
+        delay: anime.stagger(150),
+        easing: 'easeOutExpo'
+      });
+    },
+
+    heartClick: (index: number | string) => {
+      if (!isMounted) return;
+
+      anime.timeline()
+        .add({
+          targets: `.heart-icon-${index}`,
+          scale: [1, 1.5, 1],
+          rotate: ['0deg', '40deg', '0deg'],
+          duration: 800,
+          easing: 'easeInOutBack'
+        })
+        .add({
+          targets: `.heart-icon-${index}-particles`,
+          scale: [0, 1],
+          opacity: [1, 0],
+          translateY: [-20, -40],
+          translateX: [-20, 20],
+          rotate: [-45, 45],
+          duration: 1000,
+          delay: anime.stagger(100),
+          easing: 'easeOutExpo'
+        }, '-=400');
+    },
+
+    modalOpen: () => {
+      if (!isMounted) return;
+
+      anime.timeline()
+        .add({
+          targets: '.modal-backdrop',
+          opacity: [0, 1],
+          duration: 300,
+          easing: 'easeOutQuad'
+        })
+        .add({
+          targets: '.modal-content',
+          scale: [0.8, 1],
+          opacity: [0, 1],
+          translateY: [-20, 0],
+          rotateX: [-10, 0],
+          duration: 600,
+          easing: 'spring(1, 90, 12, 0)'
+        }, '-=100')
+        .add({
+          targets: '.modal-content .info-item',
+          translateX: [-20, 0],
+          opacity: [0, 1],
+          delay: anime.stagger(100),
+          duration: 500,
+          easing: 'easeOutQuad'
+        }, '-=200');
+    },
+
+    modalClose: () => {
+      if (!isMounted) return;
+
+      anime.timeline()
+        .add({
+          targets: '.modal-content',
+          scale: [1, 0.8],
+          opacity: [1, 0],
+          translateY: [0, 20],
+          rotateX: [0, -10],
+          duration: 300,
+          easing: 'easeInQuad'
+        })
+        .add({
+          targets: '.modal-backdrop',
+          opacity: [1, 0],
+          duration: 300,
+          easing: 'easeOutQuad',
+          complete: () => setSelectedAnimal(null)
+        }, '-=200');
+    }
+  };
+
+  // Mount effect
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Initialize animations after component is mounted
+  // Title and sparkles animation
   useEffect(() => {
     if (!isMounted) return;
 
-    const initializeTitleAnimation = () => {
-      const titleElement = titleRef.current;
-      if (!titleElement?.textContent) return;
-      
-      const text = titleElement.textContent;
-      titleElement.innerHTML = '';
-      text.split('').forEach((letter, i) => {
-        const span = document.createElement('span');
-        span.textContent = letter;
-        span.style.display = 'inline-block';
-        span.style.position = 'relative';
-        span.className = `letter-${i}`;
-        titleElement.appendChild(span);
-      });
-
-      anime.timeline()
-        .add({
-          targets: '.title-animation .letter-*',
-          translateY: [-100, 0],
-          opacity: [0, 1],
-          delay: anime.stagger(100),
-          easing: 'easeOutElastic(1, .6)'
-        })
-        .add({
-          targets: searchInputRef.current,
-          translateY: [-20, 0],
-          opacity: [0, 1],
-          duration: 800,
-          easing: 'easeOutExpo'
-        }, '-=800');
-    };
-
-    const initializeSparkles = () => {
-      if (!sparklesRef.current) return;
-
-      const createSparkle = () => {
-        const sparkle = document.createElement('div');
-        sparkle.className = 'absolute w-1 h-1 bg-yellow-300 rounded-full';
-        sparkle.style.left = `${Math.random() * 100}%`;
-        sparkle.style.top = `${Math.random() * 100}%`;
-        sparklesRef.current?.appendChild(sparkle);
-
-        anime({
-          targets: sparkle,
-          opacity: [0, 1, 0],
-          translateY: [-20, -40],
-          translateX: [-10, 10],
-          scale: [0, 1.2, 0],
-          duration: 2000,
-          easing: 'easeOutExpo',
-          complete: () => sparkle.remove()
-        });
-      };
-
-      const sparkleInterval = setInterval(createSparkle, 2000);
-      return () => clearInterval(sparkleInterval);
-    };
-
-    initializeTitleAnimation();
-    const cleanup = initializeSparkles();
+    const titleElement = titleRef.current;
+    if (!titleElement?.textContent) return;
     
-    return cleanup;
+    const text = titleElement.textContent;
+    titleElement.innerHTML = '';
+    text.split('').forEach((letter, i) => {
+      const span = document.createElement('span');
+      span.textContent = letter;
+      span.style.display = 'inline-block';
+      span.style.position = 'relative';
+      span.className = `letter-${i}`;
+      titleElement.appendChild(span);
+    });
+
+    // Initial title animation
+    anime.timeline()
+      .add({
+        targets: '.title-animation .letter-*',
+        translateY: [-100, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(100),
+        easing: 'easeOutElastic(1, .6)'
+      })
+      .add({
+        targets: searchInputRef.current,
+        translateY: [-20, 0],
+        opacity: [0, 1],
+        duration: 800,
+        easing: 'easeOutExpo'
+      }, '-=800');
+
+    // Sparkles animation
+    const createSparkle = () => {
+      if (!sparklesRef.current) return;
+      
+      const sparkle = document.createElement('div');
+      sparkle.className = 'absolute w-1 h-1 bg-yellow-300 rounded-full';
+      sparkle.style.left = `${Math.random() * 100}%`;
+      sparkle.style.top = `${Math.random() * 100}%`;
+      sparklesRef.current.appendChild(sparkle);
+
+      anime({
+        targets: sparkle,
+        opacity: [0, 1, 0],
+        translateY: [-20, -40],
+        translateX: [-10, 10],
+        scale: [0, 1.2, 0],
+        duration: 2000,
+        easing: 'easeOutExpo',
+        complete: () => sparkle.remove()
+      });
+    };
+
+    const sparkleInterval = setInterval(createSparkle, 2000);
+    return () => clearInterval(sparkleInterval);
   }, [isMounted]);
 
-  // Card animations
+  // Card entrance animation
   useEffect(() => {
     if (!isMounted) return;
 
@@ -117,150 +206,6 @@ const AnimalWebsite = () => {
     });
   }, [activeFilter, sortOrder, isMounted]);
 
-  const animateCardsFilter = () => {
-    if (!isMounted) return;
-
-    anime({
-      targets: '.animal-card',
-      scale: [0.9, 1],
-      opacity: [0.5, 1],
-      translateY: [20, 0],
-      duration: 600,
-      delay: anime.stagger(150),
-      easing: 'easeOutExpo'
-    });
-  };
-
-  const animateHeartClick = (index) => {
-    if (!isMounted) return;
-
-    anime.timeline()
-      .add({
-        targets: `.heart-icon-${index}`,
-        scale: [1, 1.5, 1],
-        rotate: ['0deg', '40deg', '0deg'],
-        duration: 800,
-        easing: 'easeInOutBack'
-      })
-      .add({
-        targets: `.heart-icon-${index}-particles`,
-        scale: [0, 1],
-        opacity: [1, 0],
-        translateY: [-20, -40],
-        translateX: [-20, 20],
-        rotate: [-45, 45],
-        duration: 1000,
-        delay: anime.stagger(100),
-        easing: 'easeOutExpo'
-      }, '-=400');
-  };
-
-  const animateModalOpen = () => {
-    if (!isMounted) return;
-
-    anime.timeline()
-      .add({
-        targets: '.modal-backdrop',
-        opacity: [0, 1],
-        duration: 300,
-        easing: 'easeOutQuad'
-      })
-      .add({
-        targets: '.modal-content',
-        scale: [0.8, 1],
-        opacity: [0, 1],
-        translateY: [-20, 0],
-        rotateX: [-10, 0],
-        duration: 600,
-        easing: 'spring(1, 90, 12, 0)'
-      }, '-=100')
-      .add({
-        targets: '.modal-content .info-item',
-        translateX: [-20, 0],
-        opacity: [0, 1],
-        delay: anime.stagger(100),
-        duration: 500,
-        easing: 'easeOutQuad'
-      }, '-=200');
-  };
-
-  const animateModalClose = () => {
-    if (!isMounted) return;
-
-    anime.timeline()
-      .add({
-        targets: '.modal-content',
-        scale: [1, 0.8],
-        opacity: [1, 0],
-        translateY: [0, 20],
-        rotateX: [0, -10],
-        duration: 300,
-        easing: 'easeInQuad'
-      })
-      .add({
-        targets: '.modal-backdrop',
-        opacity: [1, 0],
-        duration: 300,
-        easing: 'easeOutQuad',
-        complete: () => setSelectedAnimal(null)
-      }, '-=200');
-  };
-
-  const animals: Animal[] = [
-    {
-      id: 1,
-      name: 'Lion',
-      type: 'Mammal',
-      habitat: 'Savanna',
-      description: 'Known as the king of the jungle, lions are powerful big cats that live in pride groups.',
-      funFact: 'Female lions do 90% of the hunting for their pride.',
-      dangerLevel: 'High',
-      conservation: 'Vulnerable'
-    },
-    {
-      id: 2,
-      name: 'Penguin',
-      type: 'Bird',
-      habitat: 'Antarctica',
-      description: 'Flightless birds that are highly adapted to life in the water.',
-      funFact: 'Emperor penguins can dive up to 1800 feet deep.',
-      dangerLevel: 'Low',
-      conservation: 'Near Threatened'
-    },
-    {
-      id: 3,
-      name: 'Dolphin',
-      type: 'Mammal',
-      habitat: 'Ocean',
-      description: 'Highly intelligent marine mammals known for their playful behavior.',
-      funFact: 'Dolphins sleep with one half of their brain at a time.',
-      dangerLevel: 'Low',
-      conservation: 'Varies by species'
-    },
-    {
-      id: 4,
-      name: 'Red Panda',
-      type: 'Mammal',
-      habitat: 'Himalayan forests',
-      description: 'Adorable tree-dwelling mammals that mainly eat bamboo.',
-      funFact: 'They can be as small as a house cat.',
-      dangerLevel: 'Low',
-      conservation: 'Endangered'
-    }
-  ];
-
-  const filteredAndSortedAnimals = animals
-    .filter(animal => {
-      const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesFilter = activeFilter === 'all' || animal.type.toLowerCase() === activeFilter.toLowerCase();
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      const nameA = a.name.toLowerCase();
-      const nameB = b.name.toLowerCase();
-      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-    });
-
   const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setFavorites(prev => 
@@ -270,7 +215,7 @@ const AnimalWebsite = () => {
 
   const toggleSort = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-    animateCardsFilter();
+    animations.cardsFilter();
   };
 
   // Animation functions with proper TypeScript types
