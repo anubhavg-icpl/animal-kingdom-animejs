@@ -16,9 +16,12 @@ interface Animal {
   conservation: string;
 }
 
-// Animation function types
-type AnimationFunction = () => void;
-type HeartClickAnimation = (index: number | string) => void;
+interface AnimationHandlers {
+  cardsFilter: () => void;
+  heartClick: (index: number | string) => void;
+  modalOpen: () => void;
+  modalClose: () => void;
+}
 
 const AnimalWebsite = () => {
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
@@ -32,8 +35,8 @@ const AnimalWebsite = () => {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const sparklesRef = useRef<HTMLDivElement>(null);
 
-  // Animation functions
-  const animations = {
+  // Animation handlers
+  const animations: AnimationHandlers = {
     cardsFilter: () => {
       if (!isMounted) return;
 
@@ -124,71 +127,71 @@ const AnimalWebsite = () => {
     }
   };
 
-  // Mount effect
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+// Mount effect
+useEffect(() => {
+  setIsMounted(true);
+}, []);
 
-  // Title and sparkles animation
-  useEffect(() => {
-    if (!isMounted) return;
+// Title and sparkles animation
+useEffect(() => {
+  if (!isMounted) return;
 
-    const titleElement = titleRef.current;
-    if (!titleElement?.textContent) return;
+  const titleElement = titleRef.current;
+  if (!titleElement?.textContent) return;
+  
+  const text = titleElement.textContent;
+  titleElement.innerHTML = '';
+  text.split('').forEach((letter, i) => {
+    const span = document.createElement('span');
+    span.textContent = letter;
+    span.style.display = 'inline-block';
+    span.style.position = 'relative';
+    span.className = `letter-${i}`;
+    titleElement.appendChild(span);
+  });
+
+  // Initial title animation
+  anime.timeline()
+    .add({
+      targets: '.title-animation .letter-*',
+      translateY: [-100, 0],
+      opacity: [0, 1],
+      delay: anime.stagger(100),
+      easing: 'easeOutElastic(1, .6)'
+    })
+    .add({
+      targets: searchInputRef.current,
+      translateY: [-20, 0],
+      opacity: [0, 1],
+      duration: 800,
+      easing: 'easeOutExpo'
+    }, '-=800');
+
+  // Sparkles animation setup
+  const createSparkle = () => {
+    if (!sparklesRef.current) return;
     
-    const text = titleElement.textContent;
-    titleElement.innerHTML = '';
-    text.split('').forEach((letter, i) => {
-      const span = document.createElement('span');
-      span.textContent = letter;
-      span.style.display = 'inline-block';
-      span.style.position = 'relative';
-      span.className = `letter-${i}`;
-      titleElement.appendChild(span);
+    const sparkle = document.createElement('div');
+    sparkle.className = 'absolute w-1 h-1 bg-yellow-300 rounded-full';
+    sparkle.style.left = `${Math.random() * 100}%`;
+    sparkle.style.top = `${Math.random() * 100}%`;
+    sparklesRef.current.appendChild(sparkle);
+
+    anime({
+      targets: sparkle,
+      opacity: [0, 1, 0],
+      translateY: [-20, -40],
+      translateX: [-10, 10],
+      scale: [0, 1.2, 0],
+      duration: 2000,
+      easing: 'easeOutExpo',
+      complete: () => sparkle.remove()
     });
+  };
 
-    // Initial title animation
-    anime.timeline()
-      .add({
-        targets: '.title-animation .letter-*',
-        translateY: [-100, 0],
-        opacity: [0, 1],
-        delay: anime.stagger(100),
-        easing: 'easeOutElastic(1, .6)'
-      })
-      .add({
-        targets: searchInputRef.current,
-        translateY: [-20, 0],
-        opacity: [0, 1],
-        duration: 800,
-        easing: 'easeOutExpo'
-      }, '-=800');
-
-    // Sparkles animation
-    const createSparkle = () => {
-      if (!sparklesRef.current) return;
-      
-      const sparkle = document.createElement('div');
-      sparkle.className = 'absolute w-1 h-1 bg-yellow-300 rounded-full';
-      sparkle.style.left = `${Math.random() * 100}%`;
-      sparkle.style.top = `${Math.random() * 100}%`;
-      sparklesRef.current.appendChild(sparkle);
-
-      anime({
-        targets: sparkle,
-        opacity: [0, 1, 0],
-        translateY: [-20, -40],
-        translateX: [-10, 10],
-        scale: [0, 1.2, 0],
-        duration: 2000,
-        easing: 'easeOutExpo',
-        complete: () => sparkle.remove()
-      });
-    };
-
-    const sparkleInterval = setInterval(createSparkle, 2000);
-    return () => clearInterval(sparkleInterval);
-  }, [isMounted]);
+  const sparkleInterval = setInterval(createSparkle, 2000);
+  return () => clearInterval(sparkleInterval);
+}, [isMounted]);
 
   // Card entrance animation
   useEffect(() => {
