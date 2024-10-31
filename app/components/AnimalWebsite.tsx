@@ -5,16 +5,28 @@ import { Search, Heart, Info, Sparkles, X, ChevronUp, ChevronDown } from 'lucide
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import anime from 'animejs';
 
+interface Animal {
+  id: number;
+  name: string;
+  type: string;
+  habitat: string;
+  description: string;
+  funFact: string;
+  dangerLevel: 'High' | 'Low';
+  conservation: string;
+}
+
 const AnimalWebsite = () => {
-  const [selectedAnimal, setSelectedAnimal] = useState(null);
+  const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [favorites, setFavorites] = useState([]);
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const [isMounted, setIsMounted] = useState(false);
-  const searchInputRef = useRef(null);
-  const titleRef = useRef(null);
-  const sparklesRef = useRef(null);
+  
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const sparklesRef = useRef<HTMLDivElement>(null);
 
   // Handle client-side mounting
   useEffect(() => {
@@ -26,17 +38,18 @@ const AnimalWebsite = () => {
     if (!isMounted) return;
 
     const initializeTitleAnimation = () => {
-      if (!titleRef.current) return;
+      const titleElement = titleRef.current;
+      if (!titleElement?.textContent) return;
       
-      const letters = titleRef.current.textContent.split('');
-      titleRef.current.textContent = '';
-      letters.forEach((letter, i) => {
+      const text = titleElement.textContent;
+      titleElement.innerHTML = '';
+      text.split('').forEach((letter, i) => {
         const span = document.createElement('span');
         span.textContent = letter;
         span.style.display = 'inline-block';
         span.style.position = 'relative';
         span.className = `letter-${i}`;
-        titleRef.current.appendChild(span);
+        titleElement.appendChild(span);
       });
 
       anime.timeline()
@@ -64,7 +77,7 @@ const AnimalWebsite = () => {
         sparkle.className = 'absolute w-1 h-1 bg-yellow-300 rounded-full';
         sparkle.style.left = `${Math.random() * 100}%`;
         sparkle.style.top = `${Math.random() * 100}%`;
-        sparklesRef.current.appendChild(sparkle);
+        sparklesRef.current?.appendChild(sparkle);
 
         anime({
           targets: sparkle,
@@ -193,7 +206,7 @@ const AnimalWebsite = () => {
       }, '-=200');
   };
 
-  const animals = [
+  const animals: Animal[] = [
     {
       id: 1,
       name: 'Lion',
@@ -248,7 +261,7 @@ const AnimalWebsite = () => {
       return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     });
 
-  const toggleFavorite = (id, e) => {
+  const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setFavorites(prev => 
       prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
@@ -260,8 +273,98 @@ const AnimalWebsite = () => {
     animateCardsFilter();
   };
 
+  // Animation functions with proper TypeScript types
+  const animateCardsFilter = () => {
+    if (!isMounted) return;
+
+    anime({
+      targets: '.animal-card',
+      scale: [0.9, 1],
+      opacity: [0.5, 1],
+      translateY: [20, 0],
+      duration: 600,
+      delay: anime.stagger(150),
+      easing: 'easeOutExpo'
+    });
+  };
+
+  const animateHeartClick = (index: number | string) => {
+    if (!isMounted) return;
+
+    anime.timeline()
+      .add({
+        targets: `.heart-icon-${index}`,
+        scale: [1, 1.5, 1],
+        rotate: ['0deg', '40deg', '0deg'],
+        duration: 800,
+        easing: 'easeInOutBack'
+      })
+      .add({
+        targets: `.heart-icon-${index}-particles`,
+        scale: [0, 1],
+        opacity: [1, 0],
+        translateY: [-20, -40],
+        translateX: [-20, 20],
+        rotate: [-45, 45],
+        duration: 1000,
+        delay: anime.stagger(100),
+        easing: 'easeOutExpo'
+      }, '-=400');
+  };
+
+  const animateModalOpen = () => {
+    if (!isMounted) return;
+
+    anime.timeline()
+      .add({
+        targets: '.modal-backdrop',
+        opacity: [0, 1],
+        duration: 300,
+        easing: 'easeOutQuad'
+      })
+      .add({
+        targets: '.modal-content',
+        scale: [0.8, 1],
+        opacity: [0, 1],
+        translateY: [-20, 0],
+        rotateX: [-10, 0],
+        duration: 600,
+        easing: 'spring(1, 90, 12, 0)'
+      }, '-=100')
+      .add({
+        targets: '.modal-content .info-item',
+        translateX: [-20, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(100),
+        duration: 500,
+        easing: 'easeOutQuad'
+      }, '-=200');
+  };
+
+  const animateModalClose = () => {
+    if (!isMounted) return;
+
+    anime.timeline()
+      .add({
+        targets: '.modal-content',
+        scale: [1, 0.8],
+        opacity: [1, 0],
+        translateY: [0, 20],
+        rotateX: [0, -10],
+        duration: 300,
+        easing: 'easeInQuad'
+      })
+      .add({
+        targets: '.modal-backdrop',
+        opacity: [1, 0],
+        duration: 300,
+        easing: 'easeOutQuad',
+        complete: () => setSelectedAnimal(null)
+      }, '-=200');
+  };
+
   if (!isMounted) {
-    return null; // or a loading state
+    return null;
   }
 
   return (
