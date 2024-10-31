@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Heart, Info, Sparkles, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import anime from 'animejs';
@@ -34,6 +34,68 @@ const AnimalWebsite = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const sparklesRef = useRef<HTMLDivElement>(null);
+
+  // Sample animal data
+  const animals: Animal[] = [
+    {
+      id: 1,
+      name: "Lion",
+      type: "mammal",
+      habitat: "Savanna",
+      description: "The king of the jungle, known for its magnificent mane and powerful presence in the African savanna.",
+      funFact: "Lions are the only cats that live in groups called prides.",
+      dangerLevel: "High",
+      conservation: "Vulnerable"
+    },
+    {
+      id: 2,
+      name: "Eagle",
+      type: "bird",
+      habitat: "Mountains",
+      description: "A majestic bird of prey with exceptional eyesight and powerful wings.",
+      funFact: "Eagles can spot a rabbit from 2 miles away.",
+      dangerLevel: "Low",
+      conservation: "Stable"
+    },
+    {
+      id: 3,
+      name: "Tiger",
+      type: "mammal",
+      habitat: "Jungle",
+      description: "The largest of all wild cats, known for their distinctive orange and black stripes.",
+      funFact: "No two tigers have exactly the same stripe pattern.",
+      dangerLevel: "High",
+      conservation: "Endangered"
+    },
+    {
+      id: 4,
+      name: "Penguin",
+      type: "bird",
+      habitat: "Antarctica",
+      description: "Flightless birds highly adapted to life in the water and extreme cold conditions.",
+      funFact: "Emperor penguins can dive up to 1800 feet deep in water.",
+      dangerLevel: "Low",
+      conservation: "Near Threatened"
+    }
+  ];
+
+  // Filter and sort animals
+  const filteredAndSortedAnimals = useMemo(() => {
+    return animals
+      .filter(animal => {
+        const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          animal.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          animal.habitat.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesFilter = activeFilter === 'all' || animal.type === activeFilter;
+        
+        return matchesSearch && matchesFilter;
+      })
+      .sort((a, b) => {
+        const comparison = a.name.localeCompare(b.name);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
+  }, [animals, searchTerm, activeFilter, sortOrder]);
 
   // Animation handlers
   const animations: AnimationHandlers = {
@@ -127,71 +189,71 @@ const AnimalWebsite = () => {
     }
   };
 
-// Mount effect
-useEffect(() => {
-  setIsMounted(true);
-}, []);
+  // Mount effect
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-// Title and sparkles animation
-useEffect(() => {
-  if (!isMounted) return;
+  // Title and sparkles animation
+  useEffect(() => {
+    if (!isMounted) return;
 
-  const titleElement = titleRef.current;
-  if (!titleElement?.textContent) return;
-  
-  const text = titleElement.textContent;
-  titleElement.innerHTML = '';
-  text.split('').forEach((letter, i) => {
-    const span = document.createElement('span');
-    span.textContent = letter;
-    span.style.display = 'inline-block';
-    span.style.position = 'relative';
-    span.className = `letter-${i}`;
-    titleElement.appendChild(span);
-  });
-
-  // Initial title animation
-  anime.timeline()
-    .add({
-      targets: '.title-animation .letter-*',
-      translateY: [-100, 0],
-      opacity: [0, 1],
-      delay: anime.stagger(100),
-      easing: 'easeOutElastic(1, .6)'
-    })
-    .add({
-      targets: searchInputRef.current,
-      translateY: [-20, 0],
-      opacity: [0, 1],
-      duration: 800,
-      easing: 'easeOutExpo'
-    }, '-=800');
-
-  // Sparkles animation setup
-  const createSparkle = () => {
-    if (!sparklesRef.current) return;
+    const titleElement = titleRef.current;
+    if (!titleElement?.textContent) return;
     
-    const sparkle = document.createElement('div');
-    sparkle.className = 'absolute w-1 h-1 bg-yellow-300 rounded-full';
-    sparkle.style.left = `${Math.random() * 100}%`;
-    sparkle.style.top = `${Math.random() * 100}%`;
-    sparklesRef.current.appendChild(sparkle);
-
-    anime({
-      targets: sparkle,
-      opacity: [0, 1, 0],
-      translateY: [-20, -40],
-      translateX: [-10, 10],
-      scale: [0, 1.2, 0],
-      duration: 2000,
-      easing: 'easeOutExpo',
-      complete: () => sparkle.remove()
+    const text = titleElement.textContent;
+    titleElement.innerHTML = '';
+    text.split('').forEach((letter, i) => {
+      const span = document.createElement('span');
+      span.textContent = letter;
+      span.style.display = 'inline-block';
+      span.style.position = 'relative';
+      span.className = `letter-${i}`;
+      titleElement.appendChild(span);
     });
-  };
 
-  const sparkleInterval = setInterval(createSparkle, 2000);
-  return () => clearInterval(sparkleInterval);
-}, [isMounted]);
+    // Initial title animation
+    anime.timeline()
+      .add({
+        targets: '.title-animation .letter-*',
+        translateY: [-100, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(100),
+        easing: 'easeOutElastic(1, .6)'
+      })
+      .add({
+        targets: searchInputRef.current,
+        translateY: [-20, 0],
+        opacity: [0, 1],
+        duration: 800,
+        easing: 'easeOutExpo'
+      }, '-=800');
+
+    // Sparkles animation setup
+    const createSparkle = () => {
+      if (!sparklesRef.current) return;
+      
+      const sparkle = document.createElement('div');
+      sparkle.className = 'absolute w-1 h-1 bg-yellow-300 rounded-full';
+      sparkle.style.left = `${Math.random() * 100}%`;
+      sparkle.style.top = `${Math.random() * 100}%`;
+      sparklesRef.current.appendChild(sparkle);
+
+      anime({
+        targets: sparkle,
+        opacity: [0, 1, 0],
+        translateY: [-20, -40],
+        translateX: [-10, 10],
+        scale: [0, 1.2, 0],
+        duration: 2000,
+        easing: 'easeOutExpo',
+        complete: () => sparkle.remove()
+      });
+    };
+
+    const sparkleInterval = setInterval(createSparkle, 2000);
+    return () => clearInterval(sparkleInterval);
+  }, [isMounted]);
 
   // Card entrance animation
   useEffect(() => {
@@ -221,96 +283,6 @@ useEffect(() => {
     animations.cardsFilter();
   };
 
-  // Animation functions with proper TypeScript types
-  const animateCardsFilter = () => {
-    if (!isMounted) return;
-
-    anime({
-      targets: '.animal-card',
-      scale: [0.9, 1],
-      opacity: [0.5, 1],
-      translateY: [20, 0],
-      duration: 600,
-      delay: anime.stagger(150),
-      easing: 'easeOutExpo'
-    });
-  };
-
-  const animateHeartClick = (index: number | string) => {
-    if (!isMounted) return;
-
-    anime.timeline()
-      .add({
-        targets: `.heart-icon-${index}`,
-        scale: [1, 1.5, 1],
-        rotate: ['0deg', '40deg', '0deg'],
-        duration: 800,
-        easing: 'easeInOutBack'
-      })
-      .add({
-        targets: `.heart-icon-${index}-particles`,
-        scale: [0, 1],
-        opacity: [1, 0],
-        translateY: [-20, -40],
-        translateX: [-20, 20],
-        rotate: [-45, 45],
-        duration: 1000,
-        delay: anime.stagger(100),
-        easing: 'easeOutExpo'
-      }, '-=400');
-  };
-
-  const animateModalOpen = () => {
-    if (!isMounted) return;
-
-    anime.timeline()
-      .add({
-        targets: '.modal-backdrop',
-        opacity: [0, 1],
-        duration: 300,
-        easing: 'easeOutQuad'
-      })
-      .add({
-        targets: '.modal-content',
-        scale: [0.8, 1],
-        opacity: [0, 1],
-        translateY: [-20, 0],
-        rotateX: [-10, 0],
-        duration: 600,
-        easing: 'spring(1, 90, 12, 0)'
-      }, '-=100')
-      .add({
-        targets: '.modal-content .info-item',
-        translateX: [-20, 0],
-        opacity: [0, 1],
-        delay: anime.stagger(100),
-        duration: 500,
-        easing: 'easeOutQuad'
-      }, '-=200');
-  };
-
-  const animateModalClose = () => {
-    if (!isMounted) return;
-
-    anime.timeline()
-      .add({
-        targets: '.modal-content',
-        scale: [1, 0.8],
-        opacity: [1, 0],
-        translateY: [0, 20],
-        rotateX: [0, -10],
-        duration: 300,
-        easing: 'easeInQuad'
-      })
-      .add({
-        targets: '.modal-backdrop',
-        opacity: [1, 0],
-        duration: 300,
-        easing: 'easeOutQuad',
-        complete: () => setSelectedAnimal(null)
-      }, '-=200');
-  };
-
   if (!isMounted) {
     return null;
   }
@@ -334,7 +306,7 @@ useEffect(() => {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              animateCardsFilter();
+              animations.cardsFilter();
             }}
           />
         </div>
@@ -345,7 +317,7 @@ useEffect(() => {
               key={filter}
               onClick={() => {
                 setActiveFilter(filter);
-                animateCardsFilter();
+                animations.cardsFilter();
               }}
               className={`px-4 py-2 rounded-full transition-all duration-300 ${
                 activeFilter === filter 
@@ -373,7 +345,7 @@ useEffect(() => {
             className="animal-card cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:rotate-1 bg-white/90 backdrop-blur-sm"
             onClick={() => {
               setSelectedAnimal(animal);
-              animateModalOpen();
+              animations.modalOpen();
             }}
           >
             <CardHeader>
@@ -389,7 +361,7 @@ useEffect(() => {
                     } heart-icon-${index}`}
                     onClick={(e) => {
                       toggleFavorite(animal.id, e);
-                      animateHeartClick(index);
+                      animations.heartClick(index);
                     }}
                   />
                   {[...Array(5)].map((_, i) => (
@@ -426,114 +398,114 @@ useEffect(() => {
 
       {selectedAnimal && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 modal-backdrop"
-          onClick={() => animateModalClose()}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 modal-backdrop"
+        onClick={() => animations.modalClose()}
+      >
+        <Card 
+          className="modal-content max-w-lg w-full bg-white/95 backdrop-blur-md"
+          onClick={(e) => e.stopPropagation()}
         >
-          <Card 
-            className="modal-content max-w-lg w-full bg-white/95 backdrop-blur-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span className="flex items-center gap-2">
-                  {selectedAnimal.name}
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center">
+              <span className="flex items-center gap-2">
+                {selectedAnimal.name}
+                <Sparkles className="w-4 h-4 text-yellow-400" />
+              </span>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  animations.modalClose();
+                }}
+                className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-2 info-item transform transition-all duration-300 hover:translate-x-1">
+              <Info className="h-5 w-5 text-blue-500 mt-1 animate-pulse" />
+              <div>
+                <p className="font-semibold">Fun Fact:</p>
+                <p className="text-gray-600">{selectedAnimal.funFact}</p>
+              </div>
+            </div>
+            
+            <div className="info-item bg-purple-50 p-4 rounded-lg transform transition-all duration-300 hover:scale-[1.02]">
+              <p className="text-gray-700 leading-relaxed">{selectedAnimal.description}</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 info-item">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Habitat</p>
+                <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm inline-block hover:bg-blue-200 transition-colors">
+                  {selectedAnimal.habitat}
                 </span>
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    animateModalClose();
-                  }}
-                  className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-2 info-item transform transition-all duration-300 hover:translate-x-1">
-                <Info className="h-5 w-5 text-blue-500 mt-1 animate-pulse" />
-                <div>
-                  <p className="font-semibold">Fun Fact:</p>
-                  <p className="text-gray-600">{selectedAnimal.funFact}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Type</p>
+                <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-sm inline-block hover:bg-purple-200 transition-colors">
+                  {selectedAnimal.type}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-3 info-item bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">Risk Level</span>
+                <span className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  selectedAnimal.dangerLevel === 'High' 
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                    : 'bg-green-100 text-green-600 hover:bg-green-200'
+                }`}>
+                  {selectedAnimal.dangerLevel} Risk Level
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">Conservation Status</span>
+                <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-sm hover:bg-orange-200 transition-colors">
+                  {selectedAnimal.conservation}
+                </span>
+              </div>
+            </div>
+            
+            {favorites.includes(selectedAnimal.id) && (
+              <div className="info-item transform transition-all duration-300">
+                <div className="flex items-center gap-2 text-red-500 bg-red-50 p-3 rounded-lg">
+                  <Heart className="h-4 w-4 fill-current animate-bounce" />
+                  <span className="text-sm font-medium">In Your Favorites</span>
                 </div>
               </div>
-              
-              <div className="info-item bg-purple-50 p-4 rounded-lg transform transition-all duration-300 hover:scale-[1.02]">
-                <p className="text-gray-700 leading-relaxed">{selectedAnimal.description}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 info-item">
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-500">Habitat</p>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm inline-block hover:bg-blue-200 transition-colors">
-                    {selectedAnimal.habitat}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-500">Type</p>
-                  <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-sm inline-block hover:bg-purple-200 transition-colors">
-                    {selectedAnimal.type}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-3 info-item bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Risk Level</span>
-                  <span className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedAnimal.dangerLevel === 'High' 
-                      ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                      : 'bg-green-100 text-green-600 hover:bg-green-200'
-                  }`}>
-                    {selectedAnimal.dangerLevel} Risk Level
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Conservation Status</span>
-                  <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-sm hover:bg-orange-200 transition-colors">
-                    {selectedAnimal.conservation}
-                  </span>
-                </div>
-              </div>
-              
-              {favorites.includes(selectedAnimal.id) && (
-                <div className="info-item transform transition-all duration-300">
-                  <div className="flex items-center gap-2 text-red-500 bg-red-50 p-3 rounded-lg">
-                    <Heart className="h-4 w-4 fill-current animate-bounce" />
-                    <span className="text-sm font-medium">In Your Favorites</span>
-                  </div>
-                </div>
-              )}
-              
-              <div className="mt-6 pt-4 border-t border-gray-100 info-item">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(selectedAnimal.id, e);
-                    animateHeartClick('modal');
-                  }}
-                  className={`w-full py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
-                    favorites.includes(selectedAnimal.id)
-                      ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            )}
+            
+            <div className="mt-6 pt-4 border-t border-gray-100 info-item">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(selectedAnimal.id, e);
+                  animations.heartClick('modal');
+                }}
+                className={`w-full py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                  favorites.includes(selectedAnimal.id)
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Heart 
+                  className={`h-5 w-5 heart-icon-modal ${
+                    favorites.includes(selectedAnimal.id) ? 'fill-current' : ''
                   }`}
-                >
-                  <Heart 
-                    className={`h-5 w-5 heart-icon-modal ${
-                      favorites.includes(selectedAnimal.id) ? 'fill-current' : ''
-                    }`}
-                  />
-                  {favorites.includes(selectedAnimal.id) ? 'Remove from Favorites' : 'Add to Favorites'}
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
+                />
+                {favorites.includes(selectedAnimal.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )}
+  </div>
+);
 };
 
 export default AnimalWebsite;
